@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import { db } from '../config/fire';
 
 
-import { collection, query, where, doc, setDoc, Timestamp, getDocs, deleteDoc,updateDoc} from "firebase/firestore";
+import { collection, query, where, doc, setDoc, Timestamp, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
 
 
 export default function Home({ LogOut }) {
@@ -19,35 +19,55 @@ export default function Home({ LogOut }) {
         status: false,
         rowKey: null
     });
-    const [unitPrice, setUnitPrice] = useState(null);
-    const onEdit = ({ id, currentUnitPrice }) => {
+    const [unitPrice, setUnitPrice] = useState({
+        currentUnitPrice: "",
+            name: "",
+            company: "",
+            empid: "",
+            email: "",
+            tech: ""
+    });
+    const onEdit = ({ id, currentUnitPrice, name, company, empid, email, tech }) => {
         setInEditMode({
             status: true,
             rowKey: id
         })
-        setUnitPrice(currentUnitPrice);
+        setUnitPrice({
+            currentUnitPrice: currentUnitPrice,
+            name: name,
+            company: company,
+            empid: empid,
+            email: email,
+            tech: tech
+        });
     }
-    const updateInventory = async ({ id, newUnitPrice }) => {
-        const userDoc=doc(db,"Employee",id)
-        const newFeild={salary:newUnitPrice}
-        await updateDoc(userDoc,newFeild)
+    const updateInventory = async ({ id, newUnitPrice,email, company, empid,name,tech }) => {
+        const userDoc = doc(db, "Employee", id)
+        const newFeild = { salary: newUnitPrice,
+            name:name,
+            email:email,
+            company:company,
+            empid:empid,
+            tech:tech
+        }
+        await updateDoc(userDoc, newFeild)
     }
-    const onSave = ({ id, newUnitPrice }) => {
-        updateInventory({ id, newUnitPrice }).then(
-            reponse=>{
+    const onSave = ({ id, newUnitPrice, email, company, empid,name,tech }) => {
+        updateInventory({ id, newUnitPrice,email,company,empid,name,tech }).then(
+            reponse => {
                 onCancel();
                 sethaveData(false);
                 setData1([]);
                 getdata().then(() => {
                     sethaveData(true);
-    
+
                 });
-               
+
 
             }
         )
     }
-    
+
     const onCancel = () => {
         // reset the inEditMode state value
         setInEditMode({
@@ -55,7 +75,14 @@ export default function Home({ LogOut }) {
             rowKey: null
         })
         // reset the unit price state value
-        setUnitPrice(null);
+        setUnitPrice({
+            currentUnitPrice: "",
+                name: "",
+                company: "",
+                empid: "",
+                email: "",
+                tech: ""
+        });
     }
 
 
@@ -179,32 +206,20 @@ export default function Home({ LogOut }) {
 
 
                                     <tr key={p.id}>
-                                        <td>
+                                        <th>
                                             {p.id}
-                                        </td>
-                                        <td>
-                                            <input type="text" placeholder="Name" id="lname" name="lname" value={p.name} onChange={(e) => { setExample({ ...example, name: e.target.value }) }} />
-                                        </td>
-                                        <td>
-                                            <input type="text" id="lname" placeholder="Company Name" name="lname" value={p.company} onChange={(e) => { setExample({ ...example, company: e.target.value }) }} />
-
-                                        </td>
-
-                                        <td>
-                                            <input type="text" id="lname" name="lname" placeholder="Company EmpId" value={p.empid} onChange={(e) => { setExample({ ...example, empid: e.target.value }) }} />
-
-                                        </td>
-                                        <td>
-                                            <input type="text" id="lname" name="lname" placeholder="Company Email" value={p.email} onChange={(e) => { setExample({ ...example, email: e.target.value }) }} />
-                                        </td>
-                                        <td>
-                                            <input type="text" id="lname" name="lname" placeholder="Technology" value={p.tech} onChange={(e) => { setExample({ ...example, tech: e.target.value }) }} />
-                                        </td>
+                                        </th>
+                                        <th>{p.name}</th>
+                                        <th>{p.company}</th>
+                                        <th>{p.empid}</th>
+                                        <th>{p.email}</th>
+                                        <th>{p.tech}</th>
+                                        
                                         <td>
                                             {
                                                 inEditMode.status && inEditMode.rowKey === p.id ? (
-                                                    <input value={unitPrice}
-                                                        onChange={(event) => setUnitPrice(event.target.value)}
+                                                    <input value={unitPrice.currentUnitPrice}
+                                                        onChange={(event) => setUnitPrice((prev) => ({ ...prev, currentUnitPrice: event.target.value }))}
                                                     />
                                                 ) : (
                                                     p.salary
@@ -219,33 +234,43 @@ export default function Home({ LogOut }) {
                                         <th>{p.tech}</th>
                                         <th>{p.salary}</th> */}
                                         <th>
-                                        {
-                                    inEditMode.status && inEditMode.rowKey === p.id ? (
-                                        <React.Fragment>
-                                            <button
-                                                className={"btn-success"}
-                                                onClick={() => onSave({id: p.id, newUnitPrice: unitPrice})}
-                                            >
-                                                Save
-                                            </button>
+                                            {
+                                                inEditMode.status && inEditMode.rowKey === p.id ? (
+                                                    <React.Fragment>
+                                                        <button
+                                                            className={"btn-success"}
+                                                            onClick={() => onSave({
+                                                                id: p.id, newUnitPrice: unitPrice.currentUnitPrice, email: unitPrice.email,
+                                                                company: unitPrice.company,
+                                                                empid: unitPrice.empid,
+                                                                name: unitPrice.name,
+                                                                tech: unitPrice.tech
 
-                                            <button
-                                                className={"btn-secondary"}
-                                                style={{marginLeft: 8}}
-                                                onClick={() => onCancel()}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </React.Fragment>
-                                    ) : (
-                                        <button
-                                            className={"btn-primary"}
-                                            onClick={() => onEdit({id: p.id, currentUnitPrice: p.salary})}
-                                        >
-                                            Edit
-                                        </button>
-                                    )
-                                }
+                                                            })}
+                                                        >
+                                                            Save
+                                                        </button>
+
+                                                        <button
+                                                            className={"btn-secondary"}
+                                                            style={{ marginLeft: 8 }}
+                                                            onClick={() => onCancel()}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </React.Fragment>
+                                                ) : (
+                                                    <button
+                                                        className={"btn-primary"}
+                                                        onClick={() => onEdit({
+                                                            id: p.id, currentUnitPrice: p.salary, name: p.name, company: p.company, empid: p.empid,
+                                                            email: p.email, tech: p.tech
+                                                        })}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                )
+                                            }
                                         </th>
                                         <th>
                                             <Button style={{ margin: '5px' }} variant="contained" onClick={() => { delet(p.id) }}>Del</Button></th>
