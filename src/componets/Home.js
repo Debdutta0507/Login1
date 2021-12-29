@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import { db } from '../config/fire';
 
 
-import { collection, query, where, doc, setDoc, Timestamp, getDocs,deleteDoc} from "firebase/firestore";
+import { collection, query, where, doc, setDoc, Timestamp, getDocs, deleteDoc,updateDoc} from "firebase/firestore";
 
 
 export default function Home({ LogOut }) {
@@ -15,15 +15,60 @@ export default function Home({ LogOut }) {
     const [data1, setData1] = useState([]);
     const [haveData, sethaveData] = useState(false);
     const [example, setExample] = useState({ id: "", name: "", company: "", empid: "", email: "", tech: "", salary: "" });
+    const [inEditMode, setInEditMode] = useState({
+        status: false,
+        rowKey: null
+    });
+    const [unitPrice, setUnitPrice] = useState(null);
+    const onEdit = ({ id, currentUnitPrice }) => {
+        setInEditMode({
+            status: true,
+            rowKey: id
+        })
+        setUnitPrice(currentUnitPrice);
+    }
+    const updateInventory = async ({ id, newUnitPrice }) => {
+        const userDoc=doc(db,"Employee",id)
+        const newFeild={salary:newUnitPrice}
+        await updateDoc(userDoc,newFeild)
+    }
+    const onSave = ({ id, newUnitPrice }) => {
+        updateInventory({ id, newUnitPrice }).then(
+            reponse=>{
+                onCancel();
+                sethaveData(false);
+                setData1([]);
+                getdata().then(() => {
+                    sethaveData(true);
+    
+                });
+               
+
+            }
+        )
+    }
+    
+    const onCancel = () => {
+        // reset the inEditMode state value
+        setInEditMode({
+            status: false,
+            rowKey: null
+        })
+        // reset the unit price state value
+        setUnitPrice(null);
+    }
+
+
+
 
     let tab;
     let data = [];
     const edit = () => {
 
-    } 
-    const delet=async(id)=>{
-        const user=doc(db,"Employee",id);
-        await deleteDoc(user).then(response=>{
+    }
+    const delet = async (id) => {
+        const user = doc(db, "Employee", id);
+        await deleteDoc(user).then(response => {
             sethaveData(false);
             setData1([]);
             getdata().then(() => {
@@ -34,7 +79,7 @@ export default function Home({ LogOut }) {
         });
 
 
-    } 
+    }
     const getdata = async () => {
         const querySnapshot = await getDocs(collection(db, "Employee"));
         querySnapshot.forEach((doc) => {
@@ -55,14 +100,14 @@ export default function Home({ LogOut }) {
 
     useEffect(() => {
         console.log("onload" + authToken);
-         if (authToken === "signed-out" || (!authToken)) {
+        if (authToken === "signed-out" || (!authToken)) {
             navigate('/')
         }
-        
 
 
 
-       else if (authToken) {
+
+        else if (authToken) {
 
             getdata().then(() => {
                 console.log("inside data")
@@ -79,7 +124,7 @@ export default function Home({ LogOut }) {
             })
 
         }
-       
+
     }, [])
     const submit = async () => {
 
@@ -135,7 +180,7 @@ export default function Home({ LogOut }) {
 
                                     <tr key={p.id}>
                                         <td>
-                                            <input type="number" id="lname" name="lname" value={p.id} ></input>
+                                            {p.id}
                                         </td>
                                         <td>
                                             <input type="text" placeholder="Name" id="lname" name="lname" value={p.name} onChange={(e) => { setExample({ ...example, name: e.target.value }) }} />
@@ -156,7 +201,15 @@ export default function Home({ LogOut }) {
                                             <input type="text" id="lname" name="lname" placeholder="Technology" value={p.tech} onChange={(e) => { setExample({ ...example, tech: e.target.value }) }} />
                                         </td>
                                         <td>
-                                            <input type="text" id="lname" name="lname" placeholder="Salary" value={p.salary} onChange={(e) => { setExample({ ...example, salary: e.target.value }) }} />
+                                            {
+                                                inEditMode.status && inEditMode.rowKey === p.id ? (
+                                                    <input value={unitPrice}
+                                                        onChange={(event) => setUnitPrice(event.target.value)}
+                                                    />
+                                                ) : (
+                                                    p.salary
+                                                )
+                                            }
                                         </td>
 
                                         {/* <th>{p.name}</th>
@@ -165,9 +218,38 @@ export default function Home({ LogOut }) {
                                         <th>{p.email}</th>
                                         <th>{p.tech}</th>
                                         <th>{p.salary}</th> */}
-                                        <th><Button style={{ margin: '5px' }} variant="contained" onClick={edit}>Edit</Button>
-                                        <Button style={{ margin: '5px' }} variant="contained" onClick={()=>{delet(p.id)}}>Del</Button></th>
-                                        
+                                        <th>
+                                        {
+                                    inEditMode.status && inEditMode.rowKey === p.id ? (
+                                        <React.Fragment>
+                                            <button
+                                                className={"btn-success"}
+                                                onClick={() => onSave({id: p.id, newUnitPrice: unitPrice})}
+                                            >
+                                                Save
+                                            </button>
+
+                                            <button
+                                                className={"btn-secondary"}
+                                                style={{marginLeft: 8}}
+                                                onClick={() => onCancel()}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </React.Fragment>
+                                    ) : (
+                                        <button
+                                            className={"btn-primary"}
+                                            onClick={() => onEdit({id: p.id, currentUnitPrice: p.salary})}
+                                        >
+                                            Edit
+                                        </button>
+                                    )
+                                }
+                                        </th>
+                                        <th>
+                                            <Button style={{ margin: '5px' }} variant="contained" onClick={() => { delet(p.id) }}>Del</Button></th>
+
                                     </tr>
                                 )
 
